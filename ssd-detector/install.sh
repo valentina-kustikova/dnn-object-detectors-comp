@@ -194,5 +194,7 @@ $CMAKE_EXE \
    -DGFLAGS_INCLUDE_DIR=$INSTALL_DIR/include \
    -DGFLAGS_LIBRARY=$INSTALL_DIR/lib/libgflags.so \
    -DProtobuf_INCLUDE_DIR=$INSTALL_DIR/include \
+   -DHDF5_LIBRARIES=$INSTALL_DIR/lib/libhdf5.so \
+   -DHDF5_INCLUDE_DIRS=$INSTALL_DIR/include \
    ..
 make -j 16
