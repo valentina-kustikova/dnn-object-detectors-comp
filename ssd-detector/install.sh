@@ -2,21 +2,43 @@
 
 module load cuda/cuda-7.5
 
-# Set variables
+# Set default values of variables
 WORKING_DIR=$PWD
 INSTALL_DIR_NAME=install
-INSTALL_DIR=$WORKING_DIR/$INSTALL_DIR_NAME
 SOURCE_DIR_NAME=dependencies
+# Read input arguments
+while getopts w:i:s: option
+do
+  case "${option}"
+  in
+  w)  WORKING_DIR=${OPTARG};;
+  i)  INSTALL_DIR_NAME=${OPTARG};;
+  s)  SOURCE_DIR_NAME=${OPTARG};;
+  \?) echo "Invalid option: -${OPTARG}";;
+  esac
+done
+
+INSTALL_DIR=$WORKING_DIR/$INSTALL_DIR_NAME
 SOURCE_DIR=$WORKING_DIR/$SOURCE_DIR_NAME
 CMAKE_DIR=bin/cmake
 CMAKE_EXE=$INSTALL_DIR/$CMAKE_DIR
 
+# Show information
+echo "Install directory: $INSTALL_DIR"
+echo "Sources directory: $SOURCE_DIR"
 
 # Prepare directories
 echo "Prepare directories"
+if [ ! -d "$WORKING_DIR" ]; then
+  mkdir -p $WORKING_DIR
+fi
 cd $WORKING_DIR
-mkdir $INSTALL_DIR_NAME
-mkdir $SOURCE_DIR_NAME
+if [ ! -d "$INSTALL_DIR_NAME" ]; then
+  mkdir $INSTALL_DIR_NAME
+fi
+if [ ! -d "$SOURCE_DIR_NAME" ]; then
+  mkdir $SOURCE_DIR_NAME
+fi
 cd $SOURCE_DIR_NAME
 
 
@@ -165,6 +187,23 @@ make install
 cd ../
 
 
+# Install Python loccally
+wget https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz
+tar -xzvf Python-2.7.14.tgz 
+cd Python-2.7.14
+./configure --prefix=$INSTALL_DIR
+make
+make install
+cd ../../
+
+# Update environment variables
+export PATH=$INSTALL_DIR:$PATH
+export PYTHONPATH=$INSTALL_DIR
+
+# Install PIP and update environment variable
+wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py -O - | python - --user
+export PATH=$HOME/.local/bin:$PATH
+
 
 # Caffe
 echo "-----------------------------------------------------------"
@@ -174,6 +213,10 @@ cd ../
 git clone https://github.com/weiliu89/caffe
 cd caffe
 git checkout ssd
+# Install all requirements
+cd scripts
+pip install -r requirements.txt
+cd ../
 mkdir build
 cd build
 # path to protoc
