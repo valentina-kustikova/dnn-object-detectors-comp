@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Set default values of variables
+WORKING_DIR=$PWD
 DATA_DIR=$PWD
 CAFFE_ROOT=$WORK_DIR/caffe
 # Read options
@@ -43,6 +44,8 @@ tar -xvf VOCtest_06-Nov-2007.tar
 
 cd $CAFFE_ROOT
 # Create the trainval.txt, test.txt, and test_name_size.txt in $DATA_DIR/VOC0712/
+cp $WORKING_DIR/create_list.sh ./data/VOC0712/create_list.sh
 ./data/VOC0712/create_list.sh -d $DATA_DIR
 # Create LMDB dataser
+cp $WORKING_DIR/create_data.sh ./data/VOC0712/create_data.sh
 ./data/VOC0712/create_data.sh -d $DATA_DIR

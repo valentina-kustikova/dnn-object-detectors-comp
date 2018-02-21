@@ -6,14 +6,18 @@ module load cuda/cuda-7.5
 WORKING_DIR=$PWD
 INSTALL_DIR_NAME=install
 SOURCE_DIR_NAME=dependencies
+BUILD_PYTHON=0
+BUILD_PYTHON_PACKAGES=0
 # Read input arguments
-while getopts w:i:s: option
+while getopts w:i:s:pr option
 do
   case "${option}"
   in
   w)  WORKING_DIR=${OPTARG};;
   i)  INSTALL_DIR_NAME=${OPTARG};;
   s)  SOURCE_DIR_NAME=${OPTARG};;
+  p)  BUILD_PYTHON=1;;
+  r)  BUILD_PYTHON_PACKAGES=1;;
   \?) echo "Invalid option: -${OPTARG}";;
   esac
 done
@@ -187,23 +191,32 @@ make install
 cd ../
 
 
-# Install Python loccally
-wget https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz
-tar -xzvf Python-2.7.14.tgz 
-cd Python-2.7.14
-./configure --prefix=$INSTALL_DIR
-make
-make install
-cd ../../
+# NOTE: Install Python locally if required
+echo "-----------------------------------------------------------"
+echo "Install Python 2.7.14"
+echo "-----------------------------------------------------------"
+if [ "$BUILD_PYTHON"=1 ]; then
+  wget https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz
+  tar -xzvf Python-2.7.14.tgz
+  cd Python-2.7.14
+  ./configure --enable-shared --prefix=$INSTALL_DIR
+  make
+  make install
+  cd ../
 
-# Update environment variables
-export PATH=$INSTALL_DIR:$PATH
-export PYTHONPATH=$INSTALL_DIR
+  # Export paths to the installed Python
+  export PATH=$INSTALL_DIR/bin:$PATH
+  export LD_LIBRARY_PATH=$INSTALL_DIR/lib:$LD_LIBRARY_PATH
+fi
 
-# Install PIP and update environment variable
-wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py -O - | python - --user
-export PATH=$HOME/.local/bin:$PATH
-
+echo "-----------------------------------------------------------"
+echo "Install PIP"
+echo "-----------------------------------------------------------"
+if [ "$BUILD_PYTHON_PACKAGES"=1 ]; then
+  # Install PIP if required and update environment variable
+  wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py -O - | python - --user
+  export PATH=$HOME/.local/bin:$PATH
+fi
 
 # Caffe
 echo "-----------------------------------------------------------"
@@ -213,14 +226,18 @@ cd ../
 git clone https://github.com/weiliu89/caffe
 cd caffe
 git checkout ssd
-# Install all requirements
-cd scripts
-pip install -r requirements.txt
-cd ../
+# path to Caffe
+export PYTHONPATH=`pwd`:$PYTHONPATH
+# path to protoc
+export PATH=$INSTALL_DIR/bin:$PATH
+# NOTE: Install all requirements if required
+if [ "$BUILD_PYTHON_PACKAGES"=1 ]; then
+  cd python
+  pip install --user -r requirements.txt
+  cd ../
+fi
 mkdir build
 cd build
-# path to protoc
-export PATH=$PATH:$INSTALL_DIR/bin
 $CMAKE_EXE \
    -DCUDA_ARCH_NAME=Kepler \
    -DBUILD_SHARED_LIBS=ON \
@@ -237,5 +254,8 @@ $CMAKE_EXE \
    -DGFLAGS_INCLUDE_DIR=$INSTALL_DIR/include \
    -DGFLAGS_LIBRARY=$INSTALL_DIR/lib/libgflags.so \
    -DProtobuf_INCLUDE_DIR=$INSTALL_DIR/include \
+   -DPYTHON_INCLUDE_DIR=$INSTALL_DIR/include/python2.7 \
+   -DPYTHON_LIBRARY=$INSTALL_DIR/lib/libpython2.7.so \
+   -DPYTHON_EXECUTABLE=$INSTALL_DIR/bin/python \
    ..
 make -j 16
