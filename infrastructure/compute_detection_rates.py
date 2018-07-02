@@ -1,25 +1,5 @@
+from data_structures import iou
 from operator import attrgetter
-from data_structures import BoundingBox, GTObject, DTObject
-
-
-def intersection_area(dt, gt):
-    bbox = BoundingBox(max(dt.bbox.ltp.x, gt.bbox.ltp.x),
-        max(dt.bbox.ltp.y, gt.bbox.ltp.y),
-        min(dt.bbox.rbp.x, gt.bbox.rbp.x),
-        min(dt.bbox.rbp.y, gt.bbox.rbp.y))
-    return bbox.area()
-
-def union_area(dt, gt):
-    bbox = BoundingBox(max(dt.bbox.ltp.x, gt.bbox.ltp.x),
-        max(dt.bbox.ltp.y, gt.bbox.ltp.y),
-        min(dt.bbox.rbp.x, gt.bbox.rbp.x),
-        min(dt.bbox.rbp.y, gt.bbox.rbp.y))
-    return dt.bbox.area() + gt.bbox.area() - bbox.area()
-
-def iou(dt, gt):
-    i = intersection_area(dt, gt)
-    u = union_area(dt, gt) # not zero
-    return float(i) / float(u)
 
 
 def compute_detection_rates(gt_bboxes, dt_bboxes, percentage):
@@ -63,7 +43,7 @@ def compute_detection_rates(gt_bboxes, dt_bboxes, percentage):
                 dt_bboxes.insert(dt_idx, dt)
             if (dt_idx == len(dt_bboxes) - 1) and (dt.fid == fid):
                 fdts.append(dt)
-            sorted(fdts, key = attrgetter('conf'), reverse = True)
+            fdts = sorted(fdts, key = attrgetter('conf'), reverse = True)
             while (gt_idx < len(gt_bboxes) - 1) and (gt.fid == fid):
                 fgts.append(gt)
                 gt_idx += 1

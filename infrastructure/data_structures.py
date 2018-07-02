@@ -42,3 +42,23 @@ class DTObject(object):
         print(str(self.fid) + ' ' + str(self.bbox.ltp.x) + ' ' + \
             str(self.bbox.ltp.y) + ' ' + str(self.bbox.rbp.x) + ' ' + \
             str(self.bbox.rbp.y) + ' ' + str(self.conf))
+
+def intersection_area(dt, gt):
+    bbox = BoundingBox(max(dt.bbox.ltp.x, gt.bbox.ltp.x),
+        max(dt.bbox.ltp.y, gt.bbox.ltp.y),
+        min(dt.bbox.rbp.x, gt.bbox.rbp.x),
+        min(dt.bbox.rbp.y, gt.bbox.rbp.y))
+    return bbox.area()
+
+def union_area(dt, gt):
+    bbox = BoundingBox(max(dt.bbox.ltp.x, gt.bbox.ltp.x),
+        max(dt.bbox.ltp.y, gt.bbox.ltp.y),
+        min(dt.bbox.rbp.x, gt.bbox.rbp.x),
+        min(dt.bbox.rbp.y, gt.bbox.rbp.y))
+    return dt.bbox.area() + gt.bbox.area() - bbox.area()
+
+def iou(dt, gt):
+    i = intersection_area(dt, gt)
+    u = union_area(dt, gt) # not zero
+    return float(i) / float(u)
+
