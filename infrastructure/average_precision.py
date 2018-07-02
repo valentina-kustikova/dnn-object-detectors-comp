@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 from operator import attrgetter
 from itertools import groupby, compress, chain
 from read_groundtruth import read_groundtruth
@@ -74,6 +75,14 @@ def average_precision_curve(gt, dt, objclass, percentage):
     return [ap, recall, precision]
 
 
+def show_precision_recall_curve(ap, recall, precision):
+    plt.plot(recall, precision)
+    plt.title('AP = {0:.3f}'.format(ap))
+    plt.xlabel('recall')
+    plt.ylabel('precision')
+    plt.show()
+
+
 if __name__ == "__main__":
     # parse command line arguments
     parser = argparse.ArgumentParser()
@@ -102,4 +111,5 @@ if __name__ == "__main__":
             args.groundtruth, args.detections, args.object_class,
             args.percentage)
         print('Average precision = ' + str(ap))
+        show_precision_recall_curve(ap, recall, precision)
         print('-----------------------------------')
