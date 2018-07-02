@@ -22,14 +22,14 @@ if __name__ == "__main__":
     parser.add_argument('-dt', '--detections', help = 'detections (file)')
     parser.add_argument('-c', '--object_class',
         help = 'object class (by default CAR)', default = 'car', type = str)
-    parser.add_argument('-s', '--silent', help = 'silent mode (print only TPR)',
+    parser.add_argument('-q', '--quiet', help = 'silent mode (print only TPR)',
         action = 'store_true')
     parser.add_argument('-p', '--percentage', help = 'intersection percentage'\
         ' (from 0 to 1, by default 0.5)', type = float, default = 0.5)
     args = parser.parse_args()
 
     # print command line arguments
-    if args.silent:
+    if args.quiet:
         print(false_detection_rate(args.groundtruth, args.detections,
             args.object_class, args.percentage))
     else:

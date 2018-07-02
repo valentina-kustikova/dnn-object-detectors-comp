@@ -15,7 +15,8 @@ class BoundingBox(object):
 
     def area(self):
         if (self.ltp.x < self.rbp.x) and (self.ltp.y < self.rbp.y):
-            return (self.rbp.x - self.ltp.x) * (self.rbp.y - self.ltp.y)
+            return (self.rbp.x - self.ltp.x + 1) *\
+                   (self.rbp.y - self.ltp.y + 1)
         else:
             return 0
 

@@ -77,17 +77,18 @@ def compute_detection_rates(gt_bboxes, dt_bboxes, percentage):
             num_bboxes = len(fgts)
             while fdt_idx >= 0:
                 comp_dt = fdts.pop(fdt_idx)
-                ispair = False
                 fgt_idx = len(fgts) - 1
+                corr_iou = 0
+                corr_idx = -1
                 while fgt_idx >= 0:
                     comp_gt = fgts.pop(fgt_idx)
-                    if iou(comp_dt, comp_gt) >= percentage:
-                        ispair = True
-                        break
-                    else:
-                        fgts.insert(fgt_idx, comp_gt)
+                    curr_iou = iou(comp_dt, comp_gt)
+                    if (curr_iou >= percentage) and (curr_iou > corr_iou):
+                        corr_iou = curr_iou
+                        corr_idx= fgt_idx
+                    fgts.insert(fgt_idx, comp_gt)
                     fgt_idx -= 1
-                if ispair:
+                if corr_idx >= 0:
                     tp += 1
                     num_pairs += 1
                 else:
