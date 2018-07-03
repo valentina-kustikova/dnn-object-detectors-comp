@@ -10,7 +10,7 @@ def read_detections(dt, objclass):
     dt_bboxes = []
     for line in dt_file:
         matcher = re.match(
-            r'([\d]+)[.\w]*[ ]+([\w]+)[ ]+([-\d]+)[ ]+([-\d]+)[ ]+([\d]+)[ ]+([\d]+)[ ]+([0-9\.]+)',
+            r'([\d]+)[.\w]*[ ]+([\w]+)[ ]+([-\d]+)[ ]+([-\d]+)[ ]+([\d]+)[ ]+([\d]+)[ ]+([-0-9\.]+)',
             line)
         if matcher:
             fid = int(matcher.group(1))
