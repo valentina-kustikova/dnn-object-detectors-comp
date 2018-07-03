@@ -1,10 +1,8 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 from operator import attrgetter
 from itertools import groupby, chain, compress
-from collections import defaultdict
 from read_groundtruth import read_groundtruth
 from read_detections import read_detections
 from data_structures import iou
