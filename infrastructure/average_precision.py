@@ -1,8 +1,10 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 from operator import attrgetter
-from itertools import groupby, compress, chain
+from itertools import groupby, chain, compress
+from collections import defaultdict
 from read_groundtruth import read_groundtruth
 from read_detections import read_detections
 from data_structures import iou
@@ -14,17 +16,17 @@ def compute_precision_recall(dt_bboxes, gt_bboxes, percentage):
     
     # sort groundtruth and group by frame identifier
     get_attr = attrgetter('fid')
-    fid_gt_bboxes = [list(g) for k, g in groupby(sorted(gt_bboxes, 
-                     key = get_attr), get_attr)]
+    fid_gt_bboxes = {k: list(g) for k, g in groupby(sorted(gt_bboxes, 
+                     key = get_attr), get_attr)}
     
     # create arrays to check correspondences between groundthuth and detections
     tp = [0 for x in range(len(dt_bboxes))]
     fp = [0 for x in range(len(dt_bboxes))]
     
     # each detection
-    for dt_idx in range(0, len(dt_bboxes)):
+    for dt_idx in range(len(dt_bboxes)):
         dt = dt_bboxes[dt_idx]
-        iou_max = 0
+        iou_max = percentage
         iou_max_idx = -1
         # compare with groudtruth of the same frame identifier
         try:
@@ -32,21 +34,23 @@ def compute_precision_recall(dt_bboxes, gt_bboxes, percentage):
         except:
             fp[dt_idx] = 1
             continue
-        for gt_idx in range(0, fid_gt_len):
-            iou_value = iou(dt, fid_gt_bboxes[dt.fid][gt_idx])
-            if (iou_value >= percentage) and (iou_value > iou_max):
+        for gt_idx in range(fid_gt_len):
+            gt = fid_gt_bboxes[dt.fid][gt_idx]
+            iou_value = iou(dt, gt)
+            if (iou_value >= iou_max):
                 iou_max = iou_value
                 iou_max_idx = gt_idx
-        if iou_max_idx >= 0:
+        if (iou_max_idx >= 0) and (not fid_gt_bboxes[dt.fid][iou_max_idx].checked):
             tp[dt_idx] = 1
+            fid_gt_bboxes[dt.fid][iou_max_idx].checked = True
         else:
             fp[dt_idx] = 1
     
     # compute cumulative sum of true positives and false positives
-    tp = np.cumsum(tp)
-    fp = np.cumsum(fp)
-    recall = tp / len(gt_bboxes)
-    precision = tp / (fp + tp) # element-wise division
+    tp = list(np.cumsum(tp))
+    fp = list(np.cumsum(fp))
+    recall = [x / len(gt_bboxes) for x in tp]
+    precision = [tp[i] / (fp[i] + tp[i]) for i in range(len(tp))]
     
     return [recall, precision]
 
@@ -57,8 +61,8 @@ def compute_average_precision(recall, precision):
     step = 0.1
     kpoints = 11
     while t <= 1.0:
-        pr = max(chain(compress(precision.tolist(), 
-                                (recall >= t).tolist()), [0.0]))
+        pr = max(chain(compress(precision,
+            [recall[i] >= t for i in range(len(recall))]), [0.0]))
         ap += pr / kpoints
         t += step
     

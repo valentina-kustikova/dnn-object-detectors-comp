@@ -25,6 +25,7 @@ class GTObject(object):
     def __init__(self, fid, bbox):
         self.fid = fid
         self.bbox = bbox
+        self.checked = False
 
     def show(self):
         print(str(self.fid) + ' ' + str(self.bbox.ltp.x) + ' ' + \

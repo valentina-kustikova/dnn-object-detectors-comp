@@ -9,91 +9,98 @@ def compute_detection_rates(gt_bboxes, dt_bboxes, percentage):
     tp = 0
     dt_idx = 0
     gt_idx = 0
-    dt = dt_bboxes.pop(dt_idx)
-    dt_bboxes.insert(dt_idx, dt)
-    gt = gt_bboxes.pop(gt_idx)
-    gt_bboxes.insert(gt_idx, gt)
+    dt = dt_bboxes[dt_idx]
+    gt = gt_bboxes[gt_idx]
 
     while True:
         while (dt_idx < len(dt_bboxes) - 1) and (dt.fid < gt.fid):
             fp += 1
             dt_idx += 1
-            dt = dt_bboxes.pop(dt_idx)
-            dt_bboxes.insert(dt_idx, dt)
-        if dt_idx == len(dt_bboxes) - 1:
+            dt = dt_bboxes[dt_idx]
+        if (dt_idx == len(dt_bboxes) - 1) and (dt.fid < gt.fid):
+            fp += 1
+            dt_idx = len(dt_bboxes)                
+            break
+        if (dt_idx == len(dt_bboxes) - 1) and (dt.fid == gt.fid):
             break
 
         while (gt_idx < len(gt_bboxes) - 1) and (dt.fid > gt.fid):
             n += 1
             fn += 1
             gt_idx += 1
-            gt = gt_bboxes.pop(gt_idx)
-            gt_bboxes.insert(gt_idx, gt)
-        if gt_idx == len(gt_bboxes) - 1:
+            gt = gt_bboxes[gt_idx]
+        if (gt_idx == len(gt_bboxes) - 1) and (dt.fid > gt.fid):
+            n += 1
+            fn += 1
+            gt_idx = len(gt_bboxes)
+            break
+        if (gt_idx == len(gt_bboxes) - 1) and (dt.fid == gt.fid):
             break
 
         if dt.fid == gt.fid:
             fid = dt.fid
             fdts = []
             fgts = []
+            
             while (dt_idx < len(dt_bboxes) - 1) and (dt.fid == fid):
                 fdts.append(dt)
                 dt_idx += 1
-                dt = dt_bboxes.pop(dt_idx)
-                dt_bboxes.insert(dt_idx, dt)
+                dt = dt_bboxes[dt_idx]
             if (dt_idx == len(dt_bboxes) - 1) and (dt.fid == fid):
                 fdts.append(dt)
             fdts = sorted(fdts, key = attrgetter('conf'), reverse = True)
+            
             while (gt_idx < len(gt_bboxes) - 1) and (gt.fid == fid):
                 fgts.append(gt)
                 gt_idx += 1
-                gt = gt_bboxes.pop(gt_idx)
-                gt_bboxes.insert(gt_idx, gt)
+                gt = gt_bboxes[gt_idx]
             if (gt_idx == len(gt_bboxes) - 1) and (gt.fid == fid):
-                fgts.append(gt)
+                fgts.append(gt)            
+            gt_status = [False for x in range(len(fgts))]
+            
             n += len(fgts)
-            fdt_idx = len(fdts) - 1
+            fdt_idx = 0
             num_pairs = 0
-            num_bboxes = len(fgts)
-            while fdt_idx >= 0:
-                comp_dt = fdts.pop(fdt_idx)
-                fgt_idx = len(fgts) - 1
-                corr_iou = 0
+            
+            while fdt_idx < len(fdts):
+                comp_dt = fdts[fdt_idx]
+                fgt_idx = 0
+                corr_iou = percentage
                 corr_idx = -1
-                while fgt_idx >= 0:
-                    comp_gt = fgts.pop(fgt_idx)
+                
+                while fgt_idx < len(fgts):
+                    comp_gt = fgts[fgt_idx]
                     curr_iou = iou(comp_dt, comp_gt)
-                    if (curr_iou >= percentage) and (curr_iou > corr_iou):
+                    if (curr_iou >= corr_iou):
                         corr_iou = curr_iou
                         corr_idx= fgt_idx
-                    fgts.insert(fgt_idx, comp_gt)
-                    fgt_idx -= 1
-                if corr_idx >= 0:
+                    fgt_idx += 1
+                
+                if (corr_idx >= 0) and (not gt_status[corr_idx]):
                     tp += 1
                     num_pairs += 1
+                    gt_status[corr_idx] = True
                 else:
                     fp += 1
-                fdt_idx -= 1
-            fn += (num_bboxes - num_pairs)
+                fdt_idx += 1
+            fn += (len(fgts) - num_pairs)
 
     flag = False
     while dt_idx < len(dt_bboxes) - 1:
         flag = True
         fp += 1
         dt_idx += 1
-        dt = dt_bboxes.pop(dt_idx)
-        dt_bboxes.insert(dt_idx, dt)
-
+        dt = dt_bboxes[dt_idx]
     if flag:
         fp += 1
+    
     flag = False
     while gt_idx < len(gt_bboxes) - 1:
         flag = True
         n += 1
         fn += 1
         gt_idx += 1
-        gt = gt_bboxes.pop(gt_idx)
-        gt_bboxes.insert(gt_idx, gt)
+        gt = gt_bboxes[gt_idx]
     if flag:
         n += 1
         fn += 1
