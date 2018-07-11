@@ -2,7 +2,7 @@ import os.path
 import re
 from data_structures import BoundingBox, DTObject
 
-def read_detections(dt, objclass):
+def read_detections(dt, objclass = 'all'):
     if not os.path.isfile(dt):
         raise Exception('File \'{0}\' does not exists'.format(dt))
 
@@ -18,7 +18,7 @@ def read_detections(dt, objclass):
             bbox = BoundingBox(int(matcher.group(3)), int(matcher.group(4)),
                 int(matcher.group(5)), int(matcher.group(6)))
             conf = float(matcher.group(7))
-            if cid.lower() == objclass.lower():
+            if (objclass.lower() == 'all') or (cid.lower() == objclass.lower()):
                 dt_object = DTObject(fid, bbox, conf)
                 dt_bboxes.append(dt_object)
         else:

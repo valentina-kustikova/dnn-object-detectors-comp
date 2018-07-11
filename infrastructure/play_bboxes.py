@@ -3,16 +3,7 @@ import argparse
 import cv2
 from read_groundtruth import read_groundtruth
 from read_detections import read_detections
-
-
-def list_images(image_directory):
-    if not os.path.isdir(image_directory):
-        raise Exception('Directory \'{0}\' does not exists'.
-                        format(image_directory))
-    images = [os.path.join(image_directory, img) \
-        for img in os.listdir(image_directory) \
-            if os.path.isfile(os.path.join(image_directory, img))]
-    return images
+from auxiliary_functions import list_images
 
 
 def get_gt_img_bboxes(gt_bboxes, img_name):
@@ -58,7 +49,8 @@ if __name__ == '__main__':
     parser.add_argument('-gt', '--groundtruth', help = 'groundtruth (file)')
     parser.add_argument('-dt', '--detections', help = 'detections (file)')
     parser.add_argument('-dir', '--image_directory', help = 'image directory')
-    parser.add_argument('-c', '--object_class', default = 'car', type = str)
+    parser.add_argument('-c', '--object_class',
+        help = 'object class (by default ALL)', default = 'all', type = str)
     args = parser.parse_args()
     
     # play bounding boxes

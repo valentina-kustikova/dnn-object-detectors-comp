@@ -2,7 +2,7 @@ import os.path
 import re
 from data_structures import BoundingBox, GTObject
 
-def read_groundtruth(gt, objclass):
+def read_groundtruth(gt, objclass = 'all'):
     if not os.path.isfile(gt):
         raise Exception('File \'{0}\' does not exists'.format(gt))
 
@@ -17,7 +17,7 @@ def read_groundtruth(gt, objclass):
             cid = matcher.group(2)
             bbox = BoundingBox(int(matcher.group(3)), int(matcher.group(4)),
                 int(matcher.group(5)), int(matcher.group(6)))
-            if cid.lower() == objclass.lower():
+            if (objclass.lower() == 'all') or (cid.lower() == objclass.lower()):
                 gt_object = GTObject(fid, bbox)
                 gt_bboxes.append(gt_object)
         else:
