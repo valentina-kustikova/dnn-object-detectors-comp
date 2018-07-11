@@ -2,7 +2,8 @@
 
 ## Structure
 
-- `infrastructure` contains scripts to estimate detection quality:
+- `infrastructure` contains scripts to estimate detection/tracking quality
+  and to perform visual inspection:
 
   - `average_precision.py` to calculate average precision (AP)
     and draw precision-recall curve.
@@ -10,6 +11,8 @@
   - `false_detection_rate.py` to calculate false detection rate (FDR).
   - `false_positives_per_frame.py` to compute number of false
     positives per frame/image.
+  - `play_bboxes.py` to show groundtruth and detections simultaneously.
+  - `play_tracks.py` to show constructed tracks.
   - auxiliary scripts required for AP, TPR and FDR computation.
 
 - `ssd-detector` contains scripts to install and to execute SSD.
