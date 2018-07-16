@@ -135,14 +135,14 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu_id', type=int, default=0, help='gpu id')
     parser.add_argument('--labelmap_file',
-      default='data/VOC0712/labelmap_voc.prototxt',
-      help = 'label map')
-    parser.add_argument('--model_def', help='model definition (deploy file)')
-    parser.add_argument('--image_resize', type=int, help='model input')
-    parser.add_argument('--model_weights', help='trained model (.caffemodel)')
-    parser.add_argument('--image_dir', help='directory with images')
-    parser.add_argument('--output_file',
-      help='output file name (list of bounding boxes)')
+                        default='data/VOC0712/labelmap_voc.prototxt')
+    parser.add_argument('--model_def',
+                        default='models/ssd_vgg/VOC0712_300x300/deploy.prototxt')
+    parser.add_argument('--image_resize', default=300, type=int)
+    parser.add_argument('--model_weights',
+                        default='models/ssd_vgg/VOC0712_300x300/'
+                        'VGG_VOC0712_SSD_300x300_iter_120000.caffemodel')
+    parser.add_argument('--image_file', default='examples/images/fish-bike.jpg')
     return parser.parse_args()
 
 if __name__ == '__main__':

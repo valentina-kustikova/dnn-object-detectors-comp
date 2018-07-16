@@ -115,16 +115,18 @@ mv ATLAS atlas-3.10.3
 cd atlas-3.10.3
 mkdir build
 cd build
-../configure --cflags='-fPIC' --shared -b 64 --prefix=$INSTALL_DIR \
+../configure --shared -b 64 --prefix=$INSTALL_DIR \
   --cripple-atlas-performance --with-netlib-lapack-tarfile=../../lapack-3.4.1.tgz
 make
+make install
 cd lib
 ar -x libcblas.a
 gcc --shared -o libcblas.so -lgfortran -lm -lpthread *.o
 ar -x liblapack.a
 gcc --shared -o liblapack.so -lgfortran -lm -lpthread *.o
 rm *.o
-make install
+cp libcblas.so $INSTALL_DIR/lib
+cp liblapack.so $INSTALL_DIR/lib
 cd ../../../
 
 # HDF5
@@ -187,7 +189,7 @@ cd opencv-3.3.0
 mkdir build
 cd build
 $CMAKE_EXE -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=$INSTALL_DIR ..
-make -j 16
+make -j `nproc --all`
 make install
 cd ../../
 
@@ -211,7 +213,7 @@ cd ../
 
 # NOTE: Install Python locally if required
 echo "-----------------------------------------------------------"
-echo "Install Python 2.7.14"
+echo "Install Python 2.7.14 (optional)"
 echo "-----------------------------------------------------------"
 if [ "$BUILD_PYTHON" -eq "1" ]; then
   wget https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz
@@ -228,7 +230,7 @@ if [ "$BUILD_PYTHON" -eq "1" ]; then
 fi
 
 #echo "-----------------------------------------------------------"
-#echo "Install PIP"
+#echo "Install PIP (optional)"
 #echo "-----------------------------------------------------------"
 if [ "$BUILD_PYTHON_PACKAGES" -eq "1" ]; then
   # Install PIP if required and update environment variable
