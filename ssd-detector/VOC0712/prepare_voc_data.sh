@@ -5,12 +5,12 @@ WORKING_DIR=$PWD
 DATA_DIR=$PWD
 CAFFE_ROOT=$WORK_DIR/caffe
 # Read options
-while getopts "d:c:" option
+while getopts "d:r:" option
 do
   case "${option}"
   in
-  w) DATA_DIR=${OPTARG};;
-  c) CAFFE_ROOT=${OPTARG};;
+  d) DATA_DIR=${OPTARG};;
+  r) CAFFE_ROOT=${OPTARG};;
   \?) echo "Invalid option: -${OPTARG}";;
   esac
 done
@@ -46,6 +46,6 @@ cd $CAFFE_ROOT
 # Create the trainval.txt, test.txt, and test_name_size.txt in $DATA_DIR/VOC0712/
 cp $WORKING_DIR/create_list.sh ./data/VOC0712/create_list.sh
 ./data/VOC0712/create_list.sh -d $DATA_DIR
-# Create LMDB dataser
+# Create LMDB dataset
 cp $WORKING_DIR/create_data.sh ./data/VOC0712/create_data.sh
 ./data/VOC0712/create_data.sh -d $DATA_DIR

@@ -1,15 +1,14 @@
 #!/bin/bash
 
-module load cuda/cuda-7.5
-
 # Set default values of variables
 WORKING_DIR=$PWD
 INSTALL_DIR_NAME=install
 SOURCE_DIR_NAME=dependencies
 BUILD_PYTHON=0
 BUILD_PYTHON_PACKAGES=0
+BUILD_ON_CLUSTER_HEAD=0
 # Read input arguments
-while getopts w:i:s:pr option
+while getopts "w:,i:,s:,p,r,m" option;
 do
   case "${option}"
   in
@@ -18,6 +17,7 @@ do
   s)  SOURCE_DIR_NAME=${OPTARG};;
   p)  BUILD_PYTHON=1;;
   r)  BUILD_PYTHON_PACKAGES=1;;
+  m)  BUILD_ON_CLUSTER_HEAD=1;;
   \?) echo "Invalid option: -${OPTARG}";;
   esac
 done
@@ -45,15 +45,19 @@ if [ ! -d "$SOURCE_DIR_NAME" ]; then
 fi
 cd $SOURCE_DIR_NAME
 
+# Load modules on cluster head based on SLURM
+if [ "$BUILD_ON_CLUSTER_HEAD" -eq "1" ]; then
+  module load cuda/cuda-7.5
+fi
 
 
 # BOOST
 echo "-----------------------------------------------------------"
 echo "Install Boost"
 echo "-----------------------------------------------------------"
-wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
-tar -xzvf boost_1_65_1.tar.gz
-cd boost_1_65_1/
+wget http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz
+tar -xzvf boost_1_58_0.tar.gz
+cd boost_1_58_0/
 ./bootstrap.sh --prefix=$INSTALL_DIR
 ./b2 install --with=all
 cd ..
@@ -90,7 +94,10 @@ git clone https://github.com/gflags/gflags
 cd gflags/
 mkdir build
 cd build
-$CMAKE_EXE -DGFLAGS_BUILD_SHARED_LIBS=ON -DGFLAGS_BUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -g make ..
+$CMAKE_EXE -DGFLAGS_BUILD_SHARED_LIBS=ON \
+  -DGFLAGS_BUILD_STATIC_LIBS=ON \
+  -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
+  -g make ..
 make
 make install
 cd ../..
@@ -102,16 +109,23 @@ echo "-----------------------------------------------------------"
 wget http://www.netlib.org/lapack/lapack-3.4.1.tgz
 tar -zxvf lapack-3.4.1.tgz
 
-wget https://sourceforge.net/projects/math-atlas/files/Stable/3.10.2/atlas3.10.2.tar.bz2
-tar -xvf atlas3.10.2.tar.bz2
-mv ATLAS atlas-3.10.2
-cd atlas-3.10.2
+wget https://sourceforge.net/projects/math-atlas/files/Stable/3.10.3/atlas3.10.3.tar.bz2
+tar -xvf atlas3.10.3.tar.bz2
+mv ATLAS atlas-3.10.3
+cd atlas-3.10.3
 mkdir build
 cd build
-../configure --shared -b 64 --prefix=$INSTALL_DIR --with-netlib-lapack-tarfile=../../lapack-3.4.1.tgz
+../configure --cflags='-fPIC' --shared -b 64 --prefix=$INSTALL_DIR \
+  --cripple-atlas-performance --with-netlib-lapack-tarfile=../../lapack-3.4.1.tgz
 make
+cd lib
+ar -x libcblas.a
+gcc --shared -o libcblas.so -lgfortran -lm -lpthread *.o
+ar -x liblapack.a
+gcc --shared -o liblapack.so -lgfortran -lm -lpthread *.o
+rm *.o
 make install
-cd ../../
+cd ../../../
 
 # HDF5
 echo "-----------------------------------------------------------"
@@ -133,8 +147,12 @@ echo "Install LevelDB"
 echo "-----------------------------------------------------------"
 git clone https://github.com/google/leveldb
 cd leveldb/
+mkdir build
+cd build
+$CMAKE_EXE -DBUILD_SHARED_LIBS=ON ../
 make
-cd ../
+make install DESTDIR=$INSTALL_DIR
+cd ../../
 
 # LMDB
 echo "-----------------------------------------------------------"
@@ -195,7 +213,7 @@ cd ../
 echo "-----------------------------------------------------------"
 echo "Install Python 2.7.14"
 echo "-----------------------------------------------------------"
-if [ "$BUILD_PYTHON"=1 ]; then
+if [ "$BUILD_PYTHON" -eq "1" ]; then
   wget https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz
   tar -xzvf Python-2.7.14.tgz
   cd Python-2.7.14
@@ -209,10 +227,10 @@ if [ "$BUILD_PYTHON"=1 ]; then
   export LD_LIBRARY_PATH=$INSTALL_DIR/lib:$LD_LIBRARY_PATH
 fi
 
-echo "-----------------------------------------------------------"
-echo "Install PIP"
-echo "-----------------------------------------------------------"
-if [ "$BUILD_PYTHON_PACKAGES"=1 ]; then
+#echo "-----------------------------------------------------------"
+#echo "Install PIP"
+#echo "-----------------------------------------------------------"
+if [ "$BUILD_PYTHON_PACKAGES" -eq "1" ]; then
   # Install PIP if required and update environment variable
   wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py -O - | python - --user
   export PATH=$HOME/.local/bin:$PATH
@@ -230,32 +248,68 @@ git checkout ssd
 export PYTHONPATH=`pwd`:$PYTHONPATH
 # path to protoc
 export PATH=$INSTALL_DIR/bin:$PATH
+# path to libraries
+export LD_LIBRARY_PATH=$INSTALL_DIR/lib:$LD_LIBRARY_PATH
 # NOTE: Install all requirements if required
-if [ "$BUILD_PYTHON_PACKAGES"=1 ]; then
+if [ "$BUILD_PYTHON_PACKAGES" -eq "1" ]; then
   cd python
-  pip install --user -r requirements.txt
+  pip2 install --user -r requirements.txt
   cd ../
 fi
 mkdir build
 cd build
-$CMAKE_EXE \
-   -DCUDA_ARCH_NAME=Kepler \
-   -DBUILD_SHARED_LIBS=ON \
-   -DBUILD_python=ON \
-   -DLMDB_INCLUDE_DIR=$SOURCE_DIR/lmdb/libraries/liblmdb \
-   -DLMDB_LIBRARIES=$SOURCE_DIR/lmdb/libraries/liblmdb/liblmdb.so \
-   -DLevelDB_INCLUDE=$SOURCE_DIR/leveldb/include \
-   -DLevelDB_LIBRARY=$SOURCE_DIR/leveldb/out-shared/libleveldb.so  \
-   -DSnappy_INCLUDE_DIR=$SOURCE_DIR/snappy \
-   -DSnappy_LIBRARIES=$SOURCE_DIR/snappy/build/libsnappy.so \
-   -DGLOG_INCLUDE_DIR=$INSTALL_DIR/include \
-   -DGLOG_LIBRARY=$INSTALL_DIR/lib/libglog.so \
-   -DOpenCV_DIR=$INSTALL_DIR/share/OpenCV \
-   -DGFLAGS_INCLUDE_DIR=$INSTALL_DIR/include \
-   -DGFLAGS_LIBRARY=$INSTALL_DIR/lib/libgflags.so \
-   -DProtobuf_INCLUDE_DIR=$INSTALL_DIR/include \
-   -DPYTHON_INCLUDE_DIR=$INSTALL_DIR/include/python2.7 \
-   -DPYTHON_LIBRARY=$INSTALL_DIR/lib/libpython2.7.so \
-   -DPYTHON_EXECUTABLE=$INSTALL_DIR/bin/python \
-   ..
-make -j 16
+
+if [ "$BUILD_PYTHON" -eq "1" ]; then
+  $CMAKE_EXE \
+    -DCUDA_ARCH_NAME=Kepler \
+    -DBUILD_SHARED_LIBS=ON \
+    -DBUILD_python=ON \
+    -DCMAKE_CXX_FLAGS='-std=c++11' \
+    -DLMDB_INCLUDE_DIR=$SOURCE_DIR/lmdb/libraries/liblmdb \
+    -DLMDB_LIBRARIES=$SOURCE_DIR/lmdb/libraries/liblmdb/liblmdb.so \
+    -DLevelDB_INCLUDE=$SOURCE_DIR/leveldb/include \
+    -DLevelDB_LIBRARY=$SOURCE_DIR/leveldb/build/libleveldb.so  \
+    -DSnappy_INCLUDE_DIR=$SOURCE_DIR/snappy \
+    -DSnappy_LIBRARIES=$SOURCE_DIR/snappy/build/libsnappy.so \
+    -DGLOG_INCLUDE_DIR=$INSTALL_DIR/include \
+    -DGLOG_LIBRARY=$INSTALL_DIR/lib/libglog.so \
+    -DOpenCV_DIR=$INSTALL_DIR/share/OpenCV \
+    -DGFLAGS_INCLUDE_DIR=$INSTALL_DIR/include \
+    -DGFLAGS_LIBRARY=$INSTALL_DIR/lib/libgflags.so \
+    -DProtobuf_INCLUDE_DIR=$INSTALL_DIR/include \
+    -DAtlas_CBLAS_INCLUDE_DIR=$SOURCE_DIR/atlas-3.10.3/include \
+    -DAtlas_CLAPACK_INCLUDE_DIR=$SOURCE_DIR/atlas-3.10.3/include \
+    -DAtlas_BLAS_LIBRARY=$INSTALL_DIR/lib/libsatlas.so \
+    -DAtlas_CBLAS_LIBRARY=$SOURCE_DIR/atlas-3.10.3/build/lib/libcblas.so \
+    -DAtlas_LAPACK_LIBRARY=$SOURCE_DIR/atlas-3.10.3/build/lib/liblapack.so \
+    -DPYTHON_INCLUDE_DIR=$INSTALL_DIR/include/python2.7 \
+    -DPYTHON_LIBRARY=$INSTALL_DIR/lib/libpython2.7.so \
+    -DPYTHON_EXECUTABLE=$INSTALL_DIR/bin/python \
+    ..
+else
+  $CMAKE_EXE \
+    -DCUDA_ARCH_NAME=Kepler \
+    -DBUILD_SHARED_LIBS=ON \
+    -DBUILD_python=ON \
+    -DCMAKE_CXX_FLAGS='-std=c++11' \
+    -DLMDB_INCLUDE_DIR=$SOURCE_DIR/lmdb/libraries/liblmdb \
+    -DLMDB_LIBRARIES=$SOURCE_DIR/lmdb/libraries/liblmdb/liblmdb.so \
+    -DLevelDB_INCLUDE=$SOURCE_DIR/leveldb/include \
+    -DLevelDB_LIBRARY=$SOURCE_DIR/leveldb/build/libleveldb.so  \
+    -DSnappy_INCLUDE_DIR=$SOURCE_DIR/snappy \
+    -DSnappy_LIBRARIES=$SOURCE_DIR/snappy/build/libsnappy.so \
+    -DGLOG_INCLUDE_DIR=$INSTALL_DIR/include \
+    -DGLOG_LIBRARY=$INSTALL_DIR/lib/libglog.so \
+    -DOpenCV_DIR=$INSTALL_DIR/share/OpenCV \
+    -DGFLAGS_INCLUDE_DIR=$INSTALL_DIR/include \
+    -DGFLAGS_LIBRARY=$INSTALL_DIR/lib/libgflags.so \
+    -DProtobuf_INCLUDE_DIR=$INSTALL_DIR/include \
+    -DAtlas_CBLAS_INCLUDE_DIR=$SOURCE_DIR/atlas-3.10.3/include \
+    -DAtlas_CLAPACK_INCLUDE_DIR=$SOURCE_DIR/atlas-3.10.3/include \
+    -DAtlas_BLAS_LIBRARY=$INSTALL_DIR/lib/libsatlas.so \
+    -DAtlas_CBLAS_LIBRARY=$SOURCE_DIR/atlas-3.10.3/build/lib/libcblas.so \
+    -DAtlas_LAPACK_LIBRARY=$SOURCE_DIR/atlas-3.10.3/build/lib/liblapack.so \
+    ..
+fi
+
+make -j `nproc --all`
