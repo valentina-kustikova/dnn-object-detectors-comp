@@ -105,29 +105,39 @@ class CaffeDetection:
             result.append([xmin, ymin, xmax, ymax, label, score, label_name])
         return result
 
+def list_images(image_directory):
+    if not os.path.isdir(image_directory):
+        raise Exception('Directory \'{0}\' does not exists'.
+                        format(image_directory))
+    images = [os.path.join(image_directory, img) \
+        for img in os.listdir(image_directory) \
+            if os.path.isfile(os.path.join(image_directory, img))]
+    return images 
+
+
 def main(args):
-    '''main '''
+    '''main'''
     detection = CaffeDetection(args.gpu_id,
                                args.model_def, args.model_weights,
                                args.image_resize, args.labelmap_file)
-    result = detection.detect(args.image_file)
-    print result
+    img_files = list_images(args.image_directory)
 
-    img = Image.open(args.image_file)
-    draw = ImageDraw.Draw(img)
-    width, height = img.size
-    print width, height
-    for item in result:
-        xmin = int(round(item[0] * width))
-        ymin = int(round(item[1] * height))
-        xmax = int(round(item[2] * width))
-        ymax = int(round(item[3] * height))
-        draw.rectangle([xmin, ymin, xmax, ymax], outline=(255, 0, 0))
-        draw.text([xmin, ymin], item[-1] + str(item[-2]), (0, 0, 255))
-        print item
-        print [xmin, ymin, xmax, ymax]
-        print [xmin, ymin], item[-1]
-    img.save('detect_result.jpg')
+    output_file = open(args.output_file, 'w')
+
+    for i in range(len(img_files)):
+        file = img_files[i]
+        result = detection.detect(file)
+        img = Image.open(file)
+        width, height = img.size
+        for j in range(len(result)):
+            item = result[j]
+            xmin = int(round(item[0] * width))
+            ymin = int(round(item[1] * height))
+            xmax = int(round(item[2] * width))
+            ymax = int(round(item[3] * height))
+            output_file.write('{0} {1} {2} {3} {4} {5} {6}\n'.format(
+                os.path.basename(file), item[-1], xmin, ymin, xmax, ymax,
+                str(item[-2])))
 
 
 def parse_args():
@@ -135,14 +145,14 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu_id', type=int, default=0, help='gpu id')
     parser.add_argument('--labelmap_file',
-                        default='data/VOC0712/labelmap_voc.prototxt')
-    parser.add_argument('--model_def',
-                        default='models/ssd_vgg/VOC0712_300x300/deploy.prototxt')
-    parser.add_argument('--image_resize', default=300, type=int)
-    parser.add_argument('--model_weights',
-                        default='models/ssd_vgg/VOC0712_300x300/'
-                        'VGG_VOC0712_SSD_300x300_iter_120000.caffemodel')
-    parser.add_argument('--image_file', default='examples/images/fish-bike.jpg')
+      default='data/VOC0712/labelmap_voc.prototxt',
+      help = 'label map')
+    parser.add_argument('--model_def', help='model definition (deploy file)')
+    parser.add_argument('--image_resize', type=int, help='model input')
+    parser.add_argument('--model_weights', help='trained model (.caffemodel)')
+    parser.add_argument('--image_directory', help='directory with images')
+    parser.add_argument('--output_file',
+      help='output file name (list of bounding boxes)')
     return parser.parse_args()
 
 if __name__ == '__main__':

@@ -42,20 +42,35 @@ TRACK_LIST=(
             imgs_track_10_9000-11000
            )
 
-
-for i in "${MODEL_LIST[@]}"
+while getopts "r:,l:,d:" option;
 do
+  case "${option}"
+  in
+  r) CAFFE_ROOT=${OPTARG};;
+  l) LABEL_MAP_FILE=${OPTARG};;
+  d) DATA_DIR=${OPTARG};;
+  \?) echo "Invalid option: -${OPTARG}";;
+  esac
+done
+
+
+for i in "${!MODEL_LIST[@]}";
+do
+  echo "------------------------------------------------"
+  echo "Testing model: ${MODEL_LIST[${i}]}"
   model_weights=${MODEL_DIR}/${MODEL_LIST[${i}]}/${CAFFE_MODELS[${i}]}
   model_def=${MODEL_DIR}/${MODEL_LIST[${i}]}/${MODEL_DEF_FILE}
   image_size=${IMAGE_SIZE[${i}]}
-  for j in "${TRACK_LIST[@]}"
+
+  for j in "${!TRACK_LIST[@]}";
   do
     image_directory=${DATA_DIR}/${TRACK_LIST[${j}]}
+    echo "Images: ${image_directory}"
     output_file=${OUTPUT_DIR}/${MODEL_LIST[${i}]}_${TRACK_LIST[${j}]}.txt
-    python ssd_detect_single_image.py --gpu_id 0 --labelmap_file ${LABEL_MAP_FILE} \
+    python ssd_detect.py --gpu_id 0 --labelmap_file ${LABEL_MAP_FILE} \
       --model_def ${model_def} --image_resize ${image_size} \
       --model_weights ${model_weights} --image_directory ${image_directory} \
       --output_file ${output_file}
   done
+  echo "------------------------------------------------"
 done
-
