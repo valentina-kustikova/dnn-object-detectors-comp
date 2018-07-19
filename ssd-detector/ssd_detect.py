@@ -132,9 +132,17 @@ def main(args):
         for j in range(len(result)):
             item = result[j]
             xmin = int(round(item[0] * width))
+            if xmin < 0:
+                xmin = 0
             ymin = int(round(item[1] * height))
+            if ymin < 0:
+                ymin = 0
             xmax = int(round(item[2] * width))
+            if xmax >= width:
+                xmax = width - 1
             ymax = int(round(item[3] * height))
+            if ymax >= height:
+                ymax = height - 1
             output_file.write('{0} {1} {2} {3} {4} {5} {6}\n'.format(
                 os.path.basename(file), item[-1], xmin, ymin, xmax, ymax,
                 str(item[-2])))

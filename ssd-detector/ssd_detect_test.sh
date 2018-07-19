@@ -2,6 +2,8 @@
 
 CAFFE_ROOT="$HOME/kustikova_v/detectors/ssd/caffe"
 
+export PYTHONPATH=${CAFFE_ROOT}/python:$PYTHONPATH
+
 LABEL_MAP_FILE=$CAFFE_ROOT/data/VOC0712/labelmap_voc.prototxt
 MODEL_DEF_FILE=deploy.prototxt
 OUTPUT_DIR=$CAFFE_ROOT/experiments
