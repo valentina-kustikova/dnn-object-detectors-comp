@@ -11,15 +11,19 @@ cd $root_dir
 
 redo=1
 data_root_dir="$HOME/Documents/data/VOCdevkit"
-while getopts "d:" option
+while getopts "d:" option;
 do
   case "${option}"
   in
   d)  data_root_dir=${OPTARG};;
   \?) echo "Invalid option: -${OPTARG}";;
+  esac
 done
 dataset_name="VOC0712"
 mapfile="$root_dir/data/$dataset_name/labelmap_voc.prototxt"
+echo "Data root directory: ${data_root_dir}"
+echo "Map file: ${mapfile}"
+
 anno_type="detection"
 db="lmdb"
 min_dim=0

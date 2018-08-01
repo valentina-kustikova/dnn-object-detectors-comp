@@ -4,18 +4,22 @@
 # in the official SSD repository
 # https://github.com/weiliu89/caffe/tree/ssd/data/VOC0712
 
-root_dir=$HOME/Documents/data/VOCdevkit/
-while getopts "d:" option
+root_dir=$HOME/Documents/data/VOCdevkit
+while getopts "d:" option;
 do
   case "${option}"
   in
-  r)  root_dir=${OPTARG};;
+  d)  root_dir="${OPTARG}/VOCdevkit";;
   \?) echo "Invalid option: -$(OPTARG)";;
   esac
 done
+echo "Root directory: ${root_dir}"
+
 sub_dir=ImageSets/Main
 bash_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-for dataset in trainval test
+echo "Bash directory: ${bash_dir}"
+
+for dataset in trainval test;
 do
   dst_file=$bash_dir/$dataset.txt
   if [ -f $dst_file ]
