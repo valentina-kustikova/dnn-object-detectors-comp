@@ -1,4 +1,5 @@
 import argparse
+import sys
 from read_groundtruth import read_groundtruth
 from read_detections import read_detections
 from compute_detection_rates import compute_detection_rates
@@ -18,17 +19,20 @@ def fppf_rate(gt, dt, objclass, percentage, kimages):
 if __name__ == "__main__":
     # parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-gt', '--groundtruth', help = 'groundtruth (file)')
-    parser.add_argument('-dt', '--detections', help = 'detections (file)')
+    parser.add_argument('-g', '--groundtruth', help = 'groundtruth (file)')
+    parser.add_argument('-d', '--detections', help = 'detections (file)')
+    parser.add_argument('-k', '--kimages', help = 'number of images',
+        type = int)
     parser.add_argument('-c', '--object_class',
         help = 'object class (by default CAR)', default = 'car', type = str)
     parser.add_argument('-q', '--quiet', help = 'silent mode (print only TPR)',
         action = 'store_true')
     parser.add_argument('-p', '--percentage', help = 'intersection percentage'\
-        ' (from 0 to 1, by default 0.5)', type = float, default = 0.5)
-    parser.add_argument('-k', '--kimages', help = 'number of images',
-        type = int)
+        ' (from 0 to 1, by default 0.5)', type = float, default = 0.5)    
     args = parser.parse_args()
+    if len(sys.argv) < 4:
+        parser.print_help()
+        sys.exit()
 
     # print command line arguments
     if args.quiet:

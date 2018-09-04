@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import cv2
 from read_groundtruth import read_groundtruth
@@ -46,12 +47,15 @@ def play_bboxes(img_dir, gt, dt, obj_class):
 if __name__ == '__main__':
     # parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-gt', '--groundtruth', help = 'groundtruth (file)')
-    parser.add_argument('-dt', '--detections', help = 'detections (file)')
-    parser.add_argument('-dir', '--image_directory', help = 'image directory')
+    parser.add_argument('-g', '--groundtruth', help = 'groundtruth (file)')
+    parser.add_argument('-d', '--detections', help = 'detections (file)')
+    parser.add_argument('-i', '--image_directory', help = 'image directory')
     parser.add_argument('-c', '--object_class',
         help = 'object class (by default ALL)', default = 'all', type = str)
     args = parser.parse_args()
+    if len(sys.argv) < 4:
+        parser.print_help()
+        sys.exit()
     
     # play bounding boxes
     play_bboxes(args.image_directory, args.groundtruth, args.detections,

@@ -1,4 +1,5 @@
 import argparse
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from operator import attrgetter
@@ -88,8 +89,8 @@ def show_precision_recall_curve(ap, recall, precision):
 if __name__ == "__main__":
     # parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-gt', '--groundtruth', help = 'groundtruth (file)')
-    parser.add_argument('-dt', '--detections', help = 'detections (file)')
+    parser.add_argument('-g', '--groundtruth', help = 'groundtruth (file)')
+    parser.add_argument('-d', '--detections', help = 'detections (file)')
     parser.add_argument('-c', '--object_class',
         help = 'object class (by default CAR)', default = 'car', type = str)
     parser.add_argument('-q', '--quiet', help = 'silent mode (print only TPR)',
@@ -97,6 +98,9 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--percentage', help = 'intersection percentage'\
         ' (from 0 to 1, by default 0.5)', type = float, default = 0.5)
     args = parser.parse_args()
+    if len(sys.argv) < 3:
+        parser.print_help()
+        sys.exit()
 
     # print command line arguments
     if args.quiet:

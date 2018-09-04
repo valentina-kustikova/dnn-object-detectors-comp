@@ -1,6 +1,8 @@
 import os.path
 import re
+from operator import attrgetter
 from data_structures import BoundingBox, DTObject
+
 
 def read_detections(dt, objclass = 'all'):
     if not os.path.isfile(dt):
@@ -25,4 +27,5 @@ def read_detections(dt, objclass = 'all'):
             raise Exception('File \'{0}\' contains not matched line \'{1}\''.
                 format(dt, line))
 
+    dt_bboxes.sort(key = attrgetter('fid'))
     return dt_bboxes
