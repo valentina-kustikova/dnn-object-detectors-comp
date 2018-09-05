@@ -24,7 +24,7 @@ def read_detections(dt, objclass = 'all'):
                 dt_object = DTObject(fid, bbox, conf)
                 dt_bboxes.append(dt_object)
         else:
-            raise Exception('File \'{0}\' contains not matched line \'{1}\''.
+            print('File \'{0}\' contains not matched line \'{1}\''.
                 format(dt, line))
 
     dt_bboxes.sort(key = attrgetter('fid'))

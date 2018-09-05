@@ -68,9 +68,7 @@ def compute_average_precision(recall, precision):
     return ap
 
 
-def average_precision_curve(gt, dt, objclass, percentage):
-    gt_bboxes = read_groundtruth(gt, objclass)
-    dt_bboxes = read_detections(dt, objclass)
+def average_precision_curve(gt_bboxes, dt_bboxes, objclass, percentage):    
     [recall, precision] = compute_precision_recall(dt_bboxes,
         gt_bboxes, percentage)
     ap = compute_average_precision(recall, precision)
@@ -113,6 +111,8 @@ if __name__ == "__main__":
         print('Object class: ' + args.object_class)
         print('Intersection percentage: ' + str(args.percentage))
         print('-----------------------------------')
+        gt_bboxes = read_groundtruth(args.groundtruth, args.object_class)
+        dt_bboxes = read_detections(args.detections, args.object_class)
         [ap, recall, precision] = average_precision_curve(
             args.groundtruth, args.detections, args.object_class,
             args.percentage)

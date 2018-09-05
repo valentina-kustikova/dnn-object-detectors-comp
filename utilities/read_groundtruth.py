@@ -23,7 +23,7 @@ def read_groundtruth(gt, objclass = 'all'):
                 gt_object = GTObject(fid, bbox)
                 gt_bboxes.append(gt_object)
         else:
-            raise Exception('File \'{0}\' contains not matched line \'{1}\''.
+            print('File \'{0}\' contains not matched line \'{1}\''.
                 format(gt, line))
 
     gt_bboxes.sort(key = attrgetter('fid'))
