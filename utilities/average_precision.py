@@ -4,6 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from operator import attrgetter
 from itertools import groupby, chain, compress
+
+sys.path.append('../readers')
+
 from read_groundtruth import read_groundtruth
 from read_detections import read_detections
 from data_structures import iou

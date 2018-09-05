@@ -2,6 +2,9 @@ import argparse
 import sys
 import os
 import re
+
+sys.path.append('../readers')
+
 from read_groundtruth import read_groundtruth
 from read_detections import read_detections
 from average_precision import average_precision_curve

@@ -1,5 +1,8 @@
 import argparse
 import sys
+
+sys.path.append('../readers')
+
 from read_groundtruth import read_groundtruth
 from read_detections import read_detections
 from compute_detection_rates import compute_detection_rates
