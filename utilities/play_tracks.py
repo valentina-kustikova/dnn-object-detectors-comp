@@ -12,10 +12,8 @@ def generate_colors(k):
 
 
 def read_bboxes(bboxes_file):
-    bboxes = []
-    try:
-        bboxes = read_groundtruth(bboxes_file)
-    except:
+    bboxes = read_groundtruth(bboxes_file)
+    if len(bboxes) == 0:
         bboxes = read_detections(bboxes_file)
     return bboxes
 

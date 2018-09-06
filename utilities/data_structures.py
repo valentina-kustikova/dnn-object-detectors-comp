@@ -22,8 +22,9 @@ class BoundingBox(object):
 
 
 class GTObject(object):
-    def __init__(self, fid, bbox):
+    def __init__(self, fid, cid, bbox):
         self.fid = fid
+        self.cid = cid
         self.bbox = bbox
         self.checked = False
 
@@ -34,8 +35,9 @@ class GTObject(object):
 
 
 class DTObject(object):
-    def __init__(self, fid, bbox, conf):
+    def __init__(self, fid, cid, bbox, conf):
         self.fid = fid
+        self.cid = cid
         self.bbox = bbox
         self.conf = conf
 

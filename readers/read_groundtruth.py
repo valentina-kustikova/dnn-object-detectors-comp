@@ -20,7 +20,7 @@ def read_groundtruth(gt, objclass = 'all'):
             bbox = BoundingBox(int(matcher.group(3)), int(matcher.group(4)),
                 int(matcher.group(5)), int(matcher.group(6)))
             if (objclass.lower() == 'all') or (cid.lower() == objclass.lower()):
-                gt_object = GTObject(fid, bbox)
+                gt_object = GTObject(fid, cid.lower(), bbox)
                 gt_bboxes.append(gt_object)
         else:
             print('File \'{0}\' contains not matched line \'{1}\''.

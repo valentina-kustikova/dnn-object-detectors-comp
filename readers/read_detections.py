@@ -21,7 +21,7 @@ def read_detections(dt, objclass = 'all'):
                 int(matcher.group(5)), int(matcher.group(6)))
             conf = float(matcher.group(7))
             if (objclass.lower() == 'all') or (cid.lower() == objclass.lower()):
-                dt_object = DTObject(fid, bbox, conf)
+                dt_object = DTObject(fid, cid.lower(), bbox, conf)
                 dt_bboxes.append(dt_object)
         else:
             print('File \'{0}\' contains not matched line \'{1}\''.
