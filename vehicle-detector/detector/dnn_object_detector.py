@@ -6,7 +6,7 @@ from object_detector import ObjectDetector
 class CaffeDNNObjectDetector(ObjectDetector):
     
     def __init__(self, weights_file_name, model_file_name, classes_file_name,
-            input_width, input_height, mean_value, scale_factor):
+            input_width, input_height, mean_value, scale_factor, threshold):
         ObjectDetector.__init__(self, weights_file_name)
         self.model_file_name = model_file_name
         self.classes_file_name = classes_file_name
@@ -15,6 +15,7 @@ class CaffeDNNObjectDetector(ObjectDetector):
         self.input_size = (input_width, input_height)
         self.mean_value = mean_value
         self.scale_factor = scale_factor
+        self.threshold = threshold
     
     def __read_classes(self):
         classes = {}
@@ -47,6 +48,8 @@ class CaffeDNNObjectDetector(ObjectDetector):
         for i in range(detections.shape[2]):
             class_id = int(detections[0, 0, i, 1])
             confidence = detections[0, 0, i, 2]
+            if confidence < self.threshold:
+                continue
             xLT = int(xscale_factor * int(detections[0, 0, i, 3] * resized_width))
             xLT = xLT if xLT >= 0 else 0
             yLT = int(yscale_factor * int(detections[0, 0, i, 4] * resized_height))

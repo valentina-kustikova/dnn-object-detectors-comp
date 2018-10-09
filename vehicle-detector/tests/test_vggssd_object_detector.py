@@ -34,23 +34,28 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--image', default = 'image.jpg',
         help = 'image name')
     parser.add_argument('-t', '--trained_model',
-        default = 'MobileNetSSD_deploy.caffemodel',
+        default = 'VGGnetSSD_300x300_VOC0712.caffemodel',
         help = 'model file (.caffemodel)')
     parser.add_argument('-p', '--prototxt',
-        default = 'MobileNetSSD_deploy.prototxt',
+        default = 'VGGnetSSD_300x300_VOC0712.prototxt',
         help = 'model description (.prototxt)')
     parser.add_argument('-l', '--labels', default = 'voc_classes.txt',
         help = 'file containing network labels in format \'<id> <class_name>\'')
-    parser.add_argument('-m', '--mean', default = 127.5, help = 'mean value')
+    parser.add_argument('-m', '--mean', default = '104 117 123',
+        help = 'mean value')
     parser.add_argument('-c', '--cols', default = 300, help = 'input width (cols)')
     parser.add_argument('-r', '--rows', default = 300, help = 'input height (rows)')
-    parser.add_argument('-s', '--scale_factor', default = 0.007843,
+    parser.add_argument('-s', '--scale_factor', default = 1.0,
         help = 'scale factor for the input blob')
+    parser.add_argument('--threshold', default = 0.5,
+        help = 'confidence threshold')
     args = parser.parse_args()
     
     image = cv2.imread(args.image, cv2.IMREAD_COLOR)
+    means = [ float(m) for m in args.mean.split() ]
     detector = CaffeDNNObjectDetector(args.trained_model, args.prototxt,
-        args.labels, args.cols, args.rows, args.mean, args.scale_factor)
+        args.labels, args.cols, args.rows, means, args.scale_factor,
+        args.threshold)
     [class_ids, xLeftTop, yLeftTop, xRightBottom, \
         yRightBottom, confidences] = detector.detect(image)
     show_detections(image, class_ids, xLeftTop, yLeftTop, xRightBottom, \
