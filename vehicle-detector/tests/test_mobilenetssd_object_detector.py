@@ -29,6 +29,7 @@ def show_detections(image, class_ids, xLeftTop, yLeftTop, xRightBottom,
     if cv2.waitKey(10) == 27:
         return
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--image', default = 'image.jpg',

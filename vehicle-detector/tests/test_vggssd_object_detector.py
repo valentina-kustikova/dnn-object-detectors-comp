@@ -24,10 +24,11 @@ def show_detections(image, class_ids, xLeftTop, yLeftTop, xRightBottom,
             (255, 255, 255), cv2.FILLED)
         cv2.putText(image, text, (xLeftTop[i], yLT),
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-    cv2.namedWindow("Image", cv2.WINDOW_NORMAL)
-    cv2.imshow("Image", image)
+    cv2.namedWindow('Image', cv2.WINDOW_NORMAL)
+    cv2.imshow('Image', image)
     if cv2.waitKey(10) == 27:
         return
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
