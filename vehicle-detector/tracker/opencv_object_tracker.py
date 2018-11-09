@@ -25,23 +25,37 @@ class OpenCVObjectTracker(ObjectTracker):
             raise ValueError('Unsupported tracker')
         return tracker
     
-    def __init__(self, tracker_name):
+    def __init__(self, tracker_name, frame = None, rois = []):
         self.tracker_name = tracker_name
         self.tracker = self.__create_opencv_tracker(tracker_name)
-    
-    def __init__(self, frame, roi, tracker_name):
-        ObjectTracker.__init__(self, frame, roi)
-        self.tracker_name = tracker_name
-        self.tracker = self.__create_opencv_tracker(tracker_name)
-        self.tracker.init(frame, roi)        
-
-    def update(self, frame, roi):
         self.frame = frame
-        self.roi = roi
+        self.rois = rois
+
+    def update_track_roi(self, frame, roi):
+        self.frame = frame
+        self.rois = [ roi ]
         self.tracker.init(frame, roi)
     
+    def update_track_rois(self, frame, rois):
+        self.frame = frame
+        self.rois = rois
+    
     def track(self, next_frame):
-        status, bbox = self.tracker.update(next_frame)
-        if not status:
-            raise Exception('ERROR: Tracking failed')
-        return (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
+        xLeftTop = []
+        yLeftTop = []
+        xRightBottom = []
+        yRightBottom = []
+        for roi in self.rois:
+            self.tracker.init(self.frame, roi)
+            status, bbox = self.tracker.update(next_frame)
+            if not status:
+                xLeftTop.append(-1)
+                yLeftTop.append(-1)
+                xRightBottom.append(-1)
+                yRightBottom.append(-1)
+                print('WARNING: Tracking failed')
+            xLeftTop.append(int(bbox[0]))
+            yLeftTop.append(int(bbox[1]))
+            xRightBottom.append(int(bbox[0] + bbox[2]))
+            yRightBottom.append(int(bbox[1] + bbox[3]))
+        return [xLeftTop, yLeftTop, xRightBottom, yRightBottom] 

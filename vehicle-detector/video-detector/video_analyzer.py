@@ -1,38 +1,54 @@
 import argparse
-import sys
-from fabrics import open_video, create_detector, create_tracker
+from fabrics import create_frame_reader, create_output_saver, \
+    create_detector, create_tracker
+from full_video_detector import FullVideoDetector
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Video to detect and track vehicles
-    parser.add_argument('-v', '--video', help = 'video to detect vehicles')
+    parser.add_argument('-q', '--frame_sequence', action = 'store_true',
+        help = 'flag that allows to process image sequence')
+    parser.add_argument('-v', '--video', help = 'video to detect vehicles or \
+        dierctory name containing image sequence')
+    
+    # Video-based detection algorithm
+    parser.add_argument('-a', '--algorithm', default = 'FD', help = 'type \
+        of video-based detection algorithm (\'FD\' - full detection \
+        frame-by-frame)')
     
     # Detector parameters
-    parser.add_argument('-d', '--detector', help = 'detector name \
-        (\'CaffeDNN\' is supported)')
-    parser.add_argument('-l', '--labels', help = 'file containing object \
-        classes for object detection in format \'<id> <class_name>\'')
-    parser.add_argument('-w', '--weights', help = 'model trained to detect \
-        objects')
-    parser.add_argument('-r', '--representation', help = 'model description')
-    parser.add_argument('-m', '--means', help = 'mean intensity value')
-    parser.add_argument('-c', '--cols', help = 'input width (cols)')
-    parser.add_argument('-r', '--rows', help = 'input height (rows)')
-    parser.add_argument('-s', '--scale_factor',  help = 'scale factor \
-        for the input blob')
-    parser.add_argument('-f', '--confidence_threshold', default = 0.5,
+    parser.add_argument('-d', '--detector', default = 'CaffeDNN',
+        help = 'detector name (\'CaffeDNN\' is supported)')
+    parser.add_argument('-l', '--labels', default = '../tests/voc_classes.txt',
+        help = 'file containing object classes for object detection \
+        in format \'<id> <class_name>\'')
+    parser.add_argument('-w', '--weights',
+        default = '../tests/VGGnetSSD_300x300_VOC0712.caffemodel',
+        help = 'model trained to detect objects')
+    parser.add_argument('-p', '--representation',
+        default = '../tests/VGGnetSSD_300x300_VOC0712.prototxt',
+        help = 'model description')
+    parser.add_argument('-m', '--mean', default = '104 117 123',
+        help = 'mean intensity value')
+    parser.add_argument('-c', '--cols', default = 300,
+        help = 'input width (cols)')
+    parser.add_argument('-r', '--rows', default = 300,
+        help = 'input height (rows)')
+    parser.add_argument('-s', '--scale_factor',  default = 1.0,
+        help = 'scale factor for the input blob')
+    parser.add_argument('-e', '--confidence_threshold', default = 0.5,
         help = 'confidence threshold')
     
     # Tracker parameters
-    parser.add_argument('-t', '--tracker', help = 'tracker name supported \
-        by OpenCV (\'BOOSTING\', \'MIL\', \'KCF\', \'TLD\', \'MEDIANFLOW\', \
-        \'GOTURN\', \'MOSSE\', \'CSRT\')')
+    parser.add_argument('-t', '--tracker', default = None, help = 'tracker \
+        name supported by OpenCV (\'BOOSTING\', \'MIL\', \'KCF\', \'TLD\', \
+        \'MEDIANFLOW\', \'GOTURN\', \'MOSSE\', \'CSRT\')')
 
     # Options
-    parser.add_argument('-q', '--quiet', action = 'store_true',
-        help = 'silent mode (detect and track objects, and write bounding \
-        boxes to the output file)')
+    parser.add_argument('-f', '--std_output', action = 'store_true',
+        help = 'redirect output information about detected objects \
+        to the standard output')
     parser.add_argument('-o', '--output', default = 'output.txt',
         help = 'output file containing list of detected vehicles')
 
@@ -40,16 +56,19 @@ if __name__ == '__main__':
 
     try:
         # Prepare video, detector and tracker
-        video = open_video(args.video)
+        video = create_frame_reader(args.frame_sequence, args.video)
+        output_saver = create_output_saver(args.std_output, args.output)
         detector = create_detector(args.detector, args.labels, args.weights,
-            args.representation, args.means, args.cols, args.rows,
-            args.scale_factor, args.threshold)
+            args.representation, args.mean, args.cols, args.rows,
+            args.scale_factor, args.confidence_threshold)
         tracker = create_tracker(args.tracker)
         # Detect and track vehicles
-        if args.quiet:
-            video_detector = OfflineVideoDetector(detector,
-                tracker, args.output)
+        if args.algorithm == 'FD':
+            video_detector = FullVideoDetector(video, detector,
+                output_saver)
         else:
-            video_detector = OnlineVideoDetector(detector, tracker)
-    except:
-        print('ERROR: {}'.format(sys.exc_info()[0]))
+            raise ValueError('Video-based detection method {} \
+                is not supported'.format(args.algorithm))
+        video_detector.process()
+    except Exception as ex:
+        print('ERROR: {}'.format(str(ex)))

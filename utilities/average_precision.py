@@ -117,8 +117,7 @@ if __name__ == "__main__":
         gt_bboxes = read_groundtruth(args.groundtruth, args.object_class)
         dt_bboxes = read_detections(args.detections, args.object_class)
         [ap, recall, precision] = average_precision_curve(
-            args.groundtruth, args.detections, args.object_class,
-            args.percentage)
+            gt_bboxes, dt_bboxes, args.object_class, args.percentage)
         print('Average precision = ' + str(ap))
         show_precision_recall_curve(ap, recall, precision)
         print('-----------------------------------')

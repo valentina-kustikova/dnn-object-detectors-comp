@@ -71,7 +71,7 @@ class CaffeDNNObjectDetector(ObjectDetector):
     
     def detect(self, image):
         resized_image = cv2.resize(image, self.input_size)
-        
+  
         blob = cv2.dnn.blobFromImage(resized_image, self.scale_factor,
             self.input_size, self.mean_value, False)
         self.net.setInput(blob)
