@@ -8,6 +8,6 @@ class OutputSaver(ABC):
 
     @abstractmethod
     def save(self, frame_idx, class_ids, xLeftTop, yLeftTop,
-             xRightBottom, yRightBottom, confidences):
+             xRightBottom, yRightBottom, confidences, trackIds = None):
         """Method saves detected objects"""
         pass

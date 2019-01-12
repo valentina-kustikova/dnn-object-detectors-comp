@@ -1,5 +1,6 @@
 import cv2
 import re
+import numpy as np
 from object_detector import ObjectDetector
 
 
@@ -29,7 +30,7 @@ class CaffeDNNObjectDetector(ObjectDetector):
         file.close()
         return classes
     
-    def __postprocess_detections(self, image, resized_image, detections):
+    def __postprocess_detections(self, image, resized_image, detections, im_info):
         class_ids = []
         xLeftTop = []
         yLeftTop = []
@@ -45,26 +46,48 @@ class CaffeDNNObjectDetector(ObjectDetector):
         xscale_factor = image.shape[1] / resized_width
         classes = self.__read_classes()
         
-        for i in range(detections.shape[2]):
-            class_id = int(detections[0, 0, i, 1])
-            confidence = detections[0, 0, i, 2]
-            if confidence < self.threshold:
-                continue
-            xLT = int(xscale_factor * int(detections[0, 0, i, 3] * resized_width))
-            xLT = xLT if xLT >= 0 else 0
-            yLT = int(yscale_factor * int(detections[0, 0, i, 4] * resized_height))
-            yLT = yLT if yLT >= 0 else 0
-            xRB = int(xscale_factor * int(detections[0, 0, i, 5] * resized_width))
-            xRB = xRB if xRB < width else width - 1            
-            yRB = int(yscale_factor * int(detections[0, 0, i, 6] * resized_height))
-            yRB = yRB if yRB < height else height - 1
-            
-            class_ids.append(classes[class_id])
-            confidences.append(confidence)
-            xLeftTop.append(xLT)
-            yLeftTop.append(yLT)
-            xRightBottom.append(xRB)
-            yRightBottom.append(yRB)
+        if im_info != -1: # Faster R-CNN or R-FCN
+            for i in range(detections.shape[2]):
+                class_id = int(detections[0, 0, i, 1])
+                confidence = detections[0, 0, i, 2]
+                if confidence < self.threshold:
+                    continue
+                xLT = int(xscale_factor * detections[0, 0, i, 3])
+                xLT = xLT if xLT >= 0 else 0
+                yLT = int(yscale_factor * detections[0, 0, i, 4])
+                yLT = yLT if yLT >= 0 else 0
+                xRB = int(xscale_factor * detections[0, 0, i, 5])
+                xRB = xRB if xRB < width else width - 1            
+                yRB = int(yscale_factor * detections[0, 0, i, 6])
+                yRB = yRB if yRB < height else height - 1
+                
+                class_ids.append(classes[class_id])
+                confidences.append(confidence)
+                xLeftTop.append(xLT)
+                yLeftTop.append(yLT)
+                xRightBottom.append(xRB)
+                yRightBottom.append(yRB)
+        else:
+            for i in range(detections.shape[2]):
+                class_id = int(detections[0, 0, i, 1])
+                confidence = detections[0, 0, i, 2]
+                if confidence < self.threshold:
+                    continue
+                xLT = int(xscale_factor * int(detections[0, 0, i, 3] * resized_width))
+                xLT = xLT if xLT >= 0 else 0
+                yLT = int(yscale_factor * int(detections[0, 0, i, 4] * resized_height))
+                yLT = yLT if yLT >= 0 else 0
+                xRB = int(xscale_factor * int(detections[0, 0, i, 5] * resized_width))
+                xRB = xRB if xRB < width else width - 1            
+                yRB = int(yscale_factor * int(detections[0, 0, i, 6] * resized_height))
+                yRB = yRB if yRB < height else height - 1
+                
+                class_ids.append(classes[class_id])
+                confidences.append(confidence)
+                xLeftTop.append(xLT)
+                yLeftTop.append(yLT)
+                xRightBottom.append(xRB)
+                yRightBottom.append(yRB)
 
         return [class_ids, xLeftTop, yLeftTop, xRightBottom, \
             yRightBottom, confidences]
@@ -75,11 +98,16 @@ class CaffeDNNObjectDetector(ObjectDetector):
         blob = cv2.dnn.blobFromImage(resized_image, self.scale_factor,
             self.input_size, self.mean_value, False)
         self.net.setInput(blob)
+        if self.net.getLayer(0).outputNameToIndex('im_info') != -1:
+            self.net.setInput(
+                np.array([[self.input_size[0], self.input_size[1], 1.6]],
+                           dtype = np.float32), 'im_info')
         detections = self.net.forward()
         
         [class_ids, xLeftTop, yLeftTop, xRightBottom, \
             yRightBottom, confidences] = self.__postprocess_detections(image,
-                resized_image, detections)
+                resized_image, detections,
+                self.net.getLayer(0).outputNameToIndex('im_info'))
         
         return [class_ids, xLeftTop, yLeftTop, xRightBottom, \
             yRightBottom, confidences]

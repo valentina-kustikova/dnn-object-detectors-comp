@@ -2,6 +2,9 @@ import os
 import sys
 import argparse
 import cv2
+
+sys.path.append('../readers')
+
 from read_groundtruth import read_groundtruth
 from read_detections import read_detections
 from auxiliary_functions import list_images
