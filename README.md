@@ -23,7 +23,7 @@
 
 - `auxiliary/ssd-detector` contains scripts to install and to execute SSD.
 
-- `vehicle-detector`
+- `vehicle-detector` is a video-based vehicle detection system.
 
   - `detector` is a package containing implementation of detection methods.
   - `tracker` is a package containing implementation of tracking methods.
