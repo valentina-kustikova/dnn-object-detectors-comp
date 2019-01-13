@@ -7,7 +7,7 @@ from std_output_saver import StdOutputSaver
 from file_output_saver import FileOutputSaver
 from video_frame_reader import VideoFrameReader
 from sequence_frame_reader import SequenceFrameReader
-from caffednn_object_detector import CaffeDNNObjectDetector
+from opencvdnn_object_detector import OpenCVDNNObjectDetector
 from opencv_object_tracker import OpenCVObjectTracker
 
 
@@ -38,12 +38,13 @@ def create_output_saver(f, output):
     return output_saver
 
 
-def create_detector(detector_name, labels_file, trained_model,
-        model_description, mean, cols, rows, scale_factor, threshold):
-    if detector_name == 'CaffeDNN':
+def create_detector(detector_name, labels_file, framework, trained_model,
+        model_description, mean, cols, rows, scale_factor, bgr, threshold):
+    if detector_name == 'OpenCV':
         means = [ float(m) for m in mean.split() ]
-        detector = CaffeDNNObjectDetector(trained_model, model_description,
-            labels_file, cols, rows, means, scale_factor, threshold)
+        detector = OpenCVDNNObjectDetector(framework, trained_model,
+            model_description, labels_file, cols, rows, means, scale_factor,
+            bgr, threshold)
     else:
         raise ValueError('Unsupported detector type')
     return detector
